@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="Content-Security-Policy"
+        content="default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'; img-src 'self' blob: data:; media-src 'self' blob: data:;" />
+  <title>LocalBeam</title>
+  <link rel="stylesheet" href="css/main.css" />
+  <link rel="stylesheet" href="css/animations.css" />
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════════════════════════════════
+     TITLE BAR (frameless drag region + window controls)
+═══════════════════════════════════════════════════════════════════════════ -->
+<header class="title-bar" id="titleBar">
+  <div class="title-bar-drag"></div>
+  <div class="title-bar-actions">
+    <button class="icon-btn theme-btn" id="themeToggle" title="Toggle theme">
+      <svg class="icon-sun" viewBox="0 0 24 24" fill="none">
+        <circle cx="12" cy="12" r="4" stroke="currentColor" stroke-width="1.5"/>
+        <path d="M12 2v2M12 20v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M2 12h2M20 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+      </svg>
+      <svg class="icon-moon" viewBox="0 0 24 24" fill="none">
+        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
+      </svg>
+    </button>
+    <button class="gear-btn" id="settingsBtn" title="Preferences">
+      <svg viewBox="0 0 400 300" style="width:20px;height:20px;">
+        <g class="gear-svg gear-spinning">
+          <circle cx="150" cy="150" r="40" fill="none" stroke="var(--success)" stroke-width="2"/>
+          <path d="M150,90 L150,110 M150,190 L150,210 M90,150 L110,150 M190,150 L210,150 M108,108 L122,122 M178,178 L192,192 M108,192 L122,178 M178,108 L192,122"
+                stroke="var(--success)" stroke-width="12" stroke-linecap="round"/>
+          <circle cx="150" cy="150" r="25" fill="var(--bg-elevated)" stroke="var(--success)" stroke-width="2"/>
+          <circle cx="150" cy="150" r="8" fill="var(--success)"/>
+        </g>
+        <g class="gear-svg gear-spinning-reverse">
+          <circle cx="232" cy="150" r="20" fill="none" stroke="var(--text-2)" stroke-width="2"/>
+          <path d="M232,125 L232,135 M232,165 L232,175 M207,150 L217,150 M247,150 L257,150 M215,133 L222,140 M242,160 L249,167 M215,167 L222,160 M242,140 L249,133"
+                stroke="var(--text-2)" stroke-width="8" stroke-linecap="round"/>
+          <circle cx="232" cy="150" r="12" fill="var(--bg-elevated)" stroke="var(--text-2)" stroke-width="2"/>
+          <circle cx="232" cy="150" r="4" fill="var(--text-2)"/>
+        </g>
+      </svg>
+    </button>
+    <div class="win-controls">
+      <button class="win-btn" id="btnMin" title="Minimize">
+        <svg viewBox="0 0 10 1"><rect width="10" height="1" fill="currentColor"/></svg>
+      </button>
+      <button class="win-btn" id="btnMax" title="Maximize">
+        <svg viewBox="0 0 10 10"><rect x="0.5" y="0.5" width="9" height="9" stroke="currentColor" fill="none"/></svg>
+      </button>
+      <button class="win-btn close" id="btnClose" title="Close">
+        <svg viewBox="0 0 10 10">
+          <line x1="1" y1="1" x2="9" y2="9" stroke="currentColor" stroke-width="1.2"/>
+          <line x1="9" y1="1" x2="1" y2="9" stroke="currentColor" stroke-width="1.2"/>
+        </svg>
+      </button>
+    </div>
+  </div>
+</header>
+
+<!-- ═══════════════════════════════════════════════════════════════════════════
+     APP SHELL — SIDEBAR + MAIN PANEL
+═══════════════════════════════════════════════════════════════════════════ -->
+<div class="app-shell">
+
+  <!-- ── SIDEBAR ──────────────────────────────────────────────────────────── -->
+  <aside class="sidebar">
+
+    <!-- Brand -->
+    <div class="sidebar-brand">
+      <div class="brand-icon" id="brandIconContainer"></div>
+      <span class="brand-name">LocalBeam</span>
+    </div>
+
+    <!-- Local device -->
+    <div class="sidebar-section">
+      <div class="section-label">Local Device</div>
+      <div class="local-device-row" id="myDeviceBadge">
+        <span class="device-dot online"></span>
+        <span class="local-device-name" id="myDeviceName">Loading…</span>
+      </div>
+    </div>
+
+    <!-- Scan button -->
+    <button class="scan-btn" id="scanBtn">
+      <svg viewBox="0 0 16 16" fill="none" width="12" height="12">
+        <circle cx="8" cy="8" r="6" stroke="currentColor" stroke-width="1.5" stroke-dasharray="3 2"/>
+        <circle cx="8" cy="8" r="3" stroke="currentColor" stroke-width="1.5"/>
+        <circle cx="8" cy="8" r="1" fill="currentColor"/>
+      </svg>
+      Scan Network
+    </button>
+
+    <!-- Available devices -->
+    <div class="sidebar-devices">
+      <div class="section-label-row">
+        <span class="section-label">Available Devices</span>
+        <span class="device-count-pill" id="deviceCountPill">0</span>
+      </div>
+      <div class="device-list" id="deviceList">
+        <div class="device-empty" id="deviceEmpty">
+          <svg viewBox="0 0 24 24" fill="none">
+            <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.5" stroke-dasharray="4 3"/>
+            <path d="M12 8v4M12 16h.01" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+          </svg>
+          <p>Scanning…</p>
+        </div>
+      </div>
+    </div>
+
+  </aside>
+
+  <!-- ── MAIN PANEL ────────────────────────────────────────────────────────── -->
+  <main class="main-panel" id="cardTransfers">
+
+    <!-- Panel header: shows selected device or placeholder -->
+    <div class="panel-header" id="panelHeader">
+      <div class="panel-placeholder" id="panelHeaderPlaceholder">
+        <span>Select a device to start</span>
+      </div>
+      <div class="panel-device-row hidden" id="panelHeaderDevice">
+        <div class="panel-avatar" id="panelDeviceAvatar">?</div>
+        <div class="panel-device-info">
+          <div class="panel-device-name" id="panelDeviceName">Device</div>
+          <div class="panel-device-ip" id="panelDeviceIP">0.0.0.0</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Panel content: drop zone + unified feed -->
+    <div class="panel-content" id="cardDropzone">
+      <div class="drop-zone" id="dropZone">
+
+        <!-- Unified feed (transfers + clip messages) -->
+        <div class="panel-feed">
+          <div class="transfer-list" id="transferList">
+            <div class="transfer-empty" id="transferEmpty">
+              <p>Empty History</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Staged files overlay -->
+        <div class="drop-staged hidden" id="dropStaged">
+          <div class="staged-inner">
+            <div class="staged-files" id="stagedFiles"></div>
+            <div class="staged-actions">
+              <p class="staged-hint">Send to:</p>
+              <div class="target-chips" id="targetChips"></div>
+              <button class="btn-ghost small" id="clearStaged">Clear</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Drag-over overlay -->
+        <div class="drop-overlay" id="dropOverlay">
+          <div class="drop-overlay-inner">
+            <svg viewBox="0 0 48 48" fill="none">
+              <path d="M24 8v24M14 22l10-14 10 14" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M8 36h32" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
+            </svg>
+            <p>Release to stage</p>
+          </div>
+        </div>
+
+        <!-- Particle canvas -->
+        <canvas class="drop-particles" id="dropParticles"></canvas>
+      </div>
+    </div>
+
+    <!-- Compose bar -->
+    <div class="compose-bar">
+      <button class="compose-attach" id="browseBtn" title="Attach file">
+        <svg viewBox="0 0 24 24" fill="none" width="16" height="16">
+          <path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66L9.41 17.41a2 2 0 01-2.83-2.83l8.49-8.48" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+      <div class="compose-input-wrap">
+        <textarea id="clipTextarea" placeholder="Type a note… (Enter to send)" rows="1" spellcheck="false"></textarea>
+      </div>
+      <button class="compose-paste" id="pasteSystemClip" title="Paste clipboard">
+        <svg viewBox="0 0 24 24" fill="none" width="14" height="14">
+          <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+      </button>
+      <span class="clip-char-count" id="clipCharCount"></span>
+      <button class="compose-send" id="sendClipBtn" disabled>
+        <svg viewBox="0 0 20 20" fill="none" width="16" height="16">
+          <path d="M3 10l14-7-7 14V10H3z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
+        </svg>
+      </button>
+    </div>
+
+  </main>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════════════
+     HIDDEN ELEMENTS — kept for JS compatibility (radar, stats, drop-idle)
+═══════════════════════════════════════════════════════════════════════════ -->
+<div style="display:none" aria-hidden="true">
+  <div id="dropIdle"></div>
+  <div id="radarWrap"><div class="radar-dots" id="radarDots"></div></div>
+  <div id="statusLed"></div>
+  <span id="statIP">—</span>
+  <span id="statDevices">0 nearby</span>
+  <span id="statSent">0 KB</span>
+  <span id="statRecv">0 KB</span>
+  <span id="speedUp">0 B/s</span>
+  <span id="speedDown">0 B/s</span>
+  <div id="clipHistory"><div id="clipHistoryEmpty"></div></div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════════════
+     MODALS / OVERLAYS
+═══════════════════════════════════════════════════════════════════════════ -->
+
+<!-- Incoming file/text accept dialog -->
+<div class="modal-backdrop" id="incomingModal">
+  <div class="modal" id="incomingDialog">
+    <div class="modal-icon" id="incomingIcon">
+      <svg viewBox="0 0 48 48" fill="none">
+        <path d="M24 8v24M14 22l10-14 10 14" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M8 36h32" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
+      </svg>
+    </div>
+    <div class="modal-body">
+      <h3 id="incomingTitle">Incoming transfer</h3>
+      <p id="incomingMeta"></p>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-danger" id="rejectBtn">Decline</button>
+      <button class="btn-primary" id="acceptBtn">Accept</button>
+    </div>
+  </div>
+</div>
+
+<!-- Device rename dialog -->
+<div class="modal-backdrop" id="renameModal">
+  <div class="modal">
+    <div class="modal-body">
+      <h3>Rename device</h3>
+      <input class="modal-input" id="renameInput" type="text" maxlength="32" />
+    </div>
+    <div class="modal-actions">
+      <button class="btn-ghost" id="renameCancelBtn">Cancel</button>
+      <button class="btn-primary" id="renameSaveBtn">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- Settings modal -->
+<div class="modal-backdrop" id="settingsModal">
+  <div class="modal" style="max-width:320px">
+    <div class="modal-icon" style="animation:none">
+      <svg viewBox="0 0 400 300" style="width:28px;height:28px;">
+        <g class="gear-svg gear-spinning">
+          <circle cx="150" cy="150" r="40" fill="none" stroke="var(--success)" stroke-width="3"/>
+          <path d="M150,90 L150,110 M150,190 L150,210 M90,150 L110,150 M190,150 L210,150 M108,108 L122,122 M178,178 L192,192 M108,192 L122,178 M178,108 L192,122"
+                stroke="var(--success)" stroke-width="14" stroke-linecap="round"/>
+          <circle cx="150" cy="150" r="25" fill="var(--bg-elevated)" stroke="var(--success)" stroke-width="3"/>
+          <circle cx="150" cy="150" r="9" fill="var(--success)"/>
+        </g>
+        <g class="gear-svg gear-spinning-reverse">
+          <circle cx="232" cy="150" r="20" fill="none" stroke="var(--text-2)" stroke-width="2"/>
+          <path d="M232,125 L232,135 M232,165 L232,175 M207,150 L217,150 M247,150 L257,150 M215,133 L222,140 M242,160 L249,167 M215,167 L222,160 M242,140 L249,133"
+                stroke="var(--text-2)" stroke-width="9" stroke-linecap="round"/>
+          <circle cx="232" cy="150" r="12" fill="var(--bg-elevated)" stroke="var(--text-2)" stroke-width="2"/>
+          <circle cx="232" cy="150" r="4" fill="var(--text-2)"/>
+        </g>
+      </svg>
+    </div>
+    <div class="modal-body">
+      <h3>Preferences</h3>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:10px;">
+      <div>
+        <div class="label-caps" style="margin-bottom:5px;">Device Name</div>
+        <input class="modal-input" id="settingsDeviceName" type="text" maxlength="32" />
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center;padding-top:10px;border-top:1px solid var(--border);">
+        <span style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;">Theme</span>
+        <button class="btn-ghost small" id="settingsThemeBtn">Toggle</button>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-ghost" id="settingsCancelBtn">Cancel</button>
+      <button class="btn-primary" id="settingsSaveBtn">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- Context menu -->
+<ul class="ctx-menu hidden" id="ctxMenu">
+  <li class="ctx-item" data-action="ping">Ping device</li>
+  <li class="ctx-item" data-action="send">Send files</li>
+  <li class="ctx-divider"></li>
+  <li class="ctx-item" data-action="rename">Rename (local alias)</li>
+  <li class="ctx-item danger" data-action="remove">Remove</li>
+</ul>
+
+<!-- Toast container -->
+<div class="toast-container" id="toastContainer"></div>
+
+<!-- ─────────────────────────────────────────────────────────────────────── -->
+<script src="js/webrtc.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>

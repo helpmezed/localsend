@@ -1,0 +1,196 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   LocalBeam — Animation System (Xbox Green Edition)
+═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── Radar ──────────────────────────────────────────────────────────────── */
+@keyframes radarSpin {
+  from { --radar-angle: 0deg; }
+  to   { --radar-angle: 360deg; }
+}
+
+@keyframes radarDotPulse {
+  0%   { opacity: 0.9; transform: translate(-50%,-50%) scale(1); }
+  70%  { opacity: 0; transform: translate(-50%,-50%) scale(2.5); }
+  100% { opacity: 0; transform: translate(-50%,-50%) scale(1); }
+}
+
+/* ── Status LED ──────────────────────────────────────────────────────────── */
+@keyframes ledBlink {
+  0%, 90%, 100% { opacity: 1; box-shadow: 0 0 0 2px var(--success-glow); }
+  45%            { opacity: 0.4; box-shadow: none; }
+}
+
+/* ── Gear animations ─────────────────────────────────────────────────────── */
+@keyframes gearSpin        { from { transform: rotate(0deg); }   to { transform: rotate(360deg); } }
+@keyframes gearSpinReverse { from { transform: rotate(360deg); } to { transform: rotate(0deg); } }
+
+/* ── Drop zone orbits ────────────────────────────────────────────────────── */
+@keyframes orbitSpin {
+  to { transform: rotate(360deg); }
+}
+
+/* ── Drop overlay pulse ──────────────────────────────────────────────────── */
+@keyframes dropOverlayPulse {
+  0%, 100% { transform: scale(1);    opacity: 1; }
+  50%       { transform: scale(1.06); opacity: 0.8; }
+}
+
+/* ── Chat-style pop-in (transfer items & clipboard items) ─────────────────── */
+@keyframes chatPopIn {
+  0%   { opacity: 0; transform: scale(0.55) translateY(50px); filter: brightness(3) blur(2px); }
+  60%  { transform: scale(1.12) translateY(-8px); filter: brightness(1.4); }
+  85%  { transform: scale(0.97); }
+  100% { opacity: 1; transform: scale(1) translateY(0); filter: brightness(1) blur(0); }
+}
+
+/* ── Intense green glow pulse (active transfer items) ────────────────────── */
+@keyframes intenseGlow {
+  0%, 100% {
+    box-shadow:
+      0 0 6px rgba(40,224,40,0.15),
+      inset 0 0 3px rgba(40,224,40,0.08);
+  }
+  50% {
+    box-shadow:
+      0 0 20px rgba(40,224,40,0.45),
+      inset 0 0 8px rgba(40,224,40,0.15);
+    border-color: var(--success);
+  }
+}
+
+/* ── Progress bar shimmer ────────────────────────────────────────────────── */
+@keyframes shimmer {
+  from { transform: translateX(-100%); }
+  to   { transform: translateX(200%); }
+}
+
+/* ── Transfer item leave ─────────────────────────────────────────────────── */
+@keyframes transferSlideOut {
+  from { opacity: 1; transform: translateX(0); max-height: 80px; }
+  to   { opacity: 0; transform: translateX(12px); max-height: 0; padding: 0; margin: 0; }
+}
+
+/* ── Device item appear ──────────────────────────────────────────────────── */
+@keyframes deviceAppear {
+  from { opacity: 0; transform: translateX(-10px) scale(0.97); }
+  to   { opacity: 1; transform: translateX(0) scale(1); }
+}
+
+/* ── Chip pop ─────────────────────────────────────────────────────────────── */
+@keyframes chipPop {
+  0%   { opacity: 0; transform: scale(0.7); }
+  70%  { transform: scale(1.08); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+/* ── Device count pill bounce ────────────────────────────────────────────── */
+@keyframes pillBounce {
+  0%   { transform: scale(1); }
+  40%  { transform: scale(1.35); }
+  70%  { transform: scale(0.9); }
+  100% { transform: scale(1); }
+}
+
+/* ── Modal animations ────────────────────────────────────────────────────── */
+@keyframes ctxIn {
+  from { opacity: 0; transform: scale(0.94) translateY(-4px); }
+  to   { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+@keyframes toastIn {
+  from { opacity: 0; transform: translateX(24px) scale(0.94); }
+  to   { opacity: 1; transform: translateX(0) scale(1); }
+}
+
+@keyframes toastOut {
+  from { opacity: 1; transform: translateX(0) scale(1); max-height: 60px; }
+  to   { opacity: 0; transform: translateX(24px) scale(0.94); max-height: 0; margin: 0; padding: 0; }
+}
+
+/* ── Incoming modal pulse ────────────────────────────────────────────────── */
+@keyframes incomingPulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(40,224,40,0.5); }
+  50%       { box-shadow: 0 0 0 10px rgba(40,224,40,0); }
+}
+
+/* ── File preview card entrance ──────────────────────────────────────────── */
+@keyframes previewReveal {
+  0%   { opacity: 0; transform: scale(0.6) rotate(-4deg); filter: brightness(2); }
+  60%  { transform: scale(1.08) rotate(1deg); filter: brightness(1.2); }
+  100% { opacity: 1; transform: scale(1) rotate(0deg); filter: brightness(1); }
+}
+
+/* ── Message skull float ─────────────────────────────────────────────────── */
+@keyframes avatarFloat {
+  0%, 100% { transform: translateY(0) rotate(-2deg); }
+  50%       { transform: translateY(-3px) rotate(2deg); }
+}
+
+/* ── Loading spinner ─────────────────────────────────────────────────────── */
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ── Copy button success pulse ───────────────────────────────────────────── */
+@keyframes copyPulse {
+  0%   { transform: scale(1); color: var(--text-2); }
+  50%  { transform: scale(1.4); color: var(--success); filter: drop-shadow(0 0 10px var(--success)); }
+  100% { transform: scale(1); color: var(--text-2); }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   UTILITY CLASSES & APPLIED ANIMATIONS
+═══════════════════════════════════════════════════════════════════════════ */
+
+.spin          { animation: spin 0.8s linear infinite; display: inline-block; }
+.animate-copy  { animation: copyPulse 0.6s cubic-bezier(0.175,0.885,0.32,1.275); }
+
+/* Staggered bento card entrance */
+@keyframes cardEntrance {
+  from { opacity: 0; transform: translateY(14px) scale(0.98); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.bento-card { animation: cardEntrance 0.5s var(--ease-out) both; }
+.card-devices   { animation-delay:   0ms; }
+.card-status    { animation-delay:  70ms; }
+.card-dropzone  { animation-delay: 130ms; }
+.card-transfers { animation-delay: 190ms; }
+.card-clipboard { animation-delay: 250ms; }
+
+/* Staggered device item entrance */
+.device-item:nth-child(1) { animation-delay:   0ms; }
+.device-item:nth-child(2) { animation-delay:  55ms; }
+.device-item:nth-child(3) { animation-delay: 110ms; }
+.device-item:nth-child(4) { animation-delay: 165ms; }
+.device-item:nth-child(5) { animation-delay: 220ms; }
+
+/* Card hover lift */
+.bento-card {
+  transition:
+    transform       0.25s cubic-bezier(0.34,1.56,0.64,1),
+    border-color    0.25s ease,
+    box-shadow      0.25s ease;
+}
+.bento-card:hover { transform: translateY(-1px); }
+
+/* Active transfer card glow */
+.bento-card.transferring {
+  animation: intenseGlow 2.5s ease-in-out infinite;
+  border-color: var(--border-hov);
+}
+
+/* Drop zone glow on drag-over */
+.card-dropzone.drag-over {
+  border-color: var(--success);
+  box-shadow: 0 0 0 1px var(--success), 0 0 30px var(--accent-glow), inset 0 0 30px rgba(40,224,40,0.04);
+}
+
+/* Device hover */
+.device-item {
+  transition:
+    transform     0.2s cubic-bezier(0.34,1.56,0.64,1),
+    border-color  0.2s ease,
+    background    0.2s ease,
+    box-shadow    0.2s ease;
+}

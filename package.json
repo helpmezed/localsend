@@ -1,0 +1,41 @@
+{
+  "name": "localbeam",
+  "version": "1.0.0",
+  "description": "Instant peer-to-peer file & clipboard transfer with a premium bento UI",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "dev": "electron . --dev",
+    "build": "electron-builder --win --x64",
+    "publish": "electron-builder --win --x64 --publish always"
+  },
+  "dependencies": {
+    "electron": "^28.3.3",
+    "electron-updater": "^6.8.3"
+  },
+  "devDependencies": {
+    "electron-builder": "^24.13.3"
+  },
+  "build": {
+    "appId": "com.localbeam.app",
+    "productName": "LocalBeam",
+    "directories": {
+      "output": "dist"
+    },
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ]
+    },
+    "publish": {
+      "provider": "github",
+      "owner": "helpmezed",
+      "repo": "localsend"
+    }
+  }
+}
