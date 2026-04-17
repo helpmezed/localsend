@@ -100,9 +100,10 @@ function deviceColor(id) {
 }
 
 function deviceInitials(name) {
-  const parts = name.trim().split(/[\s\-_]+/);
+  const parts = name.trim().split(/[\s\-_]+/).filter(p => p.length > 0);
   if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
-  return name.slice(0,2).toUpperCase();
+  const trimmed = name.trim();
+  return trimmed.slice(0, 2).toUpperCase() || '?';
 }
 
 /* ── OS icon ─────────────────────────────────────────────────────────────── */
@@ -652,7 +653,9 @@ $('sendClipBtn').addEventListener('click', async () => {
     for (const dev of targets) {
       window.rtc.sendClipText(dev, text);
     }
-    toast(`Sent to ${targets.length} device${targets.length > 1 ? 's' : ''}`, 'success', 1800);
+    toast(`Sending to ${targets.length} device${targets.length > 1 ? 's' : ''}…`, 'info', 1500);
+  } else {
+    toast('Saved as note — no devices connected', 'info', 2000);
   }
 });
 
@@ -942,6 +945,10 @@ window.onTransferDone = async (id, fileData, mimeType) => {
   renderTransfer(t);
   spawnParticles($('dropParticles'));
   toast(`Received: ${t.name}`, 'success');
+};
+
+window.onClipError = (msg) => {
+  toast(msg, 'error', 5000);
 };
 
 window.onTransferError = (id, msg) => {

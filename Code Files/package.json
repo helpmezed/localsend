@@ -1,7 +1,8 @@
 {
   "name": "localbeam",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Instant peer-to-peer file & clipboard transfer with a premium bento UI",
+  "author": "helpmezed",
   "main": "main.js",
   "scripts": {
     "start": "electron .",
@@ -10,10 +11,10 @@
     "publish": "electron-builder --win --x64 --publish always"
   },
   "dependencies": {
-    "electron": "^28.3.3",
     "electron-updater": "^6.8.3"
   },
   "devDependencies": {
+    "electron": "^28.3.3",
     "electron-builder": "^24.13.3"
   },
   "build": {

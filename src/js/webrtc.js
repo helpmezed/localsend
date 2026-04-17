@@ -228,14 +228,27 @@ class RTCManager {
       await peer.setRemoteDescription({ type: 'answer', sdp: resp.sdp });
 
     } catch (err) {
-      console.error('[RTC] sendClip error:', err);
+      window.onClipError?.(`Failed to reach ${device.alias || device.name}: ${err.message}`);
       this._cleanup(sid);
       return;
     }
 
+    // Timeout — if the channel doesn't open within 12s, surface an error
+    const openTimeout = setTimeout(() => {
+      window.onClipError?.(`Could not connect to ${device.alias || device.name} — check firewall`);
+      this._cleanup(sid);
+    }, 12000);
+
     chan.onopen = () => {
+      clearTimeout(openTimeout);
       chan.send(JSON.stringify({ type: 'clip', text, sender: window._myDevice?.name }));
       setTimeout(() => { try { chan.close(); } catch {} this._cleanup(sid); }, 2000);
+    };
+
+    chan.onerror = () => {
+      clearTimeout(openTimeout);
+      window.onClipError?.(`Connection error with ${device.alias || device.name}`);
+      this._cleanup(sid);
     };
   }
 
@@ -291,7 +304,7 @@ class RTCManager {
           expectedChunk++;
           window.onTransferProgress?.(currentTid, st.received, st.total);
         };
-        if (data instanceof Blob) data.arrayBuffer().then(processBuffer);
+        if (data instanceof Blob) data.arrayBuffer().then(processBuffer).catch(err => console.error('[WebRTC] Blob read failed:', err));
         else processBuffer(data);
         return;
       }
@@ -393,4 +406,7 @@ class RTCManager {
 window.rtc = new RTCManager();
 
 /* Store device info once available */
-(async () => { window._myDevice = await window.api.getDeviceInfo(); })();
+(async () => {
+  try { window._myDevice = await window.api.getDeviceInfo(); }
+  catch (e) { console.error('[WebRTC] Failed to load device info:', e); }
+})();
