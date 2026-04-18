@@ -237,7 +237,7 @@ function setupIPC() {
   // Window controls
   ipcMain.on('window-minimize', () => mainWindow?.minimize());
   ipcMain.on('window-maximize', () => mainWindow?.isMaximized() ? mainWindow.unmaximize() : mainWindow?.maximize());
-  ipcMain.on('window-close',    () => mainWindow?.hide());
+  ipcMain.on('window-close',    () => { app.isQuitting = true; app.quit(); });
 
   // Theme
   ipcMain.handle('get-theme', () => nativeTheme.shouldUseDarkColors ? 'dark' : 'light');
