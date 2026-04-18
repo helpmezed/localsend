@@ -428,10 +428,51 @@ body::before {
   font-size: 10px; color: var(--text-2); font-family: monospace; margin-top: 1px;
 }
 
+/* ── Sidebar navigation tabs ─────────────────────────────────────────────── */
+.sidebar-nav {
+  display: flex;
+  gap: 4px;
+  padding: 6px 10px;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.snav-btn {
+  flex: 1;
+  display: flex; align-items: center; justify-content: center; gap: 4px;
+  padding: 5px 6px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--radius-xs);
+  color: var(--text-2);
+  font: inherit; font-size: 10px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: .4px;
+  cursor: pointer; transition: all 0.18s; position: relative;
+}
+.snav-btn:hover { color: var(--text); background: var(--bg-hover); }
+.snav-btn.active {
+  color: var(--success);
+  background: rgba(40,224,40,0.08);
+  border-color: rgba(40,224,40,0.2);
+}
+
+.snav-badge {
+  position: absolute; top: 2px; right: 2px;
+  min-width: 14px; height: 14px; padding: 0 3px;
+  background: var(--success); color: #000;
+  font-size: 8px; font-weight: 900;
+  border-radius: 7px;
+  display: flex; align-items: center; justify-content: center;
+  animation: pillBounce 0.35s var(--spring);
+}
+.snav-badge.hidden { display: none; }
+
 /* ── Panel content (drop zone) ──────────────────────────────────────────── */
 .panel-content {
   flex: 1; position: relative; overflow: hidden; min-height: 0;
 }
+/* hidden when on saved page */
+.panel-content.page-hidden { display: none; }
 
 .drop-zone {
   position: absolute; inset: 0;
@@ -929,6 +970,122 @@ body::before {
 .ctx-item.danger { color: var(--error); }
 .ctx-item.danger:hover { background: rgba(204,34,34,0.1); }
 .ctx-divider { height: 1px; background: var(--border); margin: 3px 0; }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   SAVE BUTTON  (on clip-items and transfer-items)
+═══════════════════════════════════════════════════════════════════════════ */
+.btn-save {
+  flex-shrink: 0;
+  width: 22px; height: 22px;
+  background: none; border: none; padding: 0;
+  color: var(--text-3);
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: 4px;
+  transition: color 0.18s, transform 0.2s cubic-bezier(0.34,1.56,0.64,1);
+}
+.btn-save:hover { color: var(--success); transform: scale(1.2); }
+.btn-save.is-saved {
+  color: var(--success);
+  filter: drop-shadow(0 0 4px var(--success));
+}
+.btn-save.is-saved:hover { color: var(--error); filter: none; }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   SAVED PAGE
+═══════════════════════════════════════════════════════════════════════════ */
+.saved-page {
+  display: none;
+  flex-direction: column;
+  flex: 1;
+  overflow: hidden;
+  min-height: 0;
+  animation: cardEntrance 0.3s var(--ease-out) both;
+}
+.saved-page.page-visible { display: flex; }
+
+.saved-pg-header {
+  display: flex; align-items: center; gap: 8px;
+  padding: 8px 14px;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.saved-pg-title {
+  font-size: 11px; font-weight: 800;
+  text-transform: uppercase; letter-spacing: .6px;
+  color: var(--text-2);
+  flex: 1;
+}
+.saved-pg-count {
+  font-size: 10px; font-weight: 600; color: var(--text-3);
+}
+
+.saved-list {
+  flex: 1; overflow-y: auto; padding: 8px;
+  display: flex; flex-direction: column; gap: 6px;
+}
+.saved-list::-webkit-scrollbar { width: 3px; }
+.saved-list::-webkit-scrollbar-track { background: transparent; }
+.saved-list::-webkit-scrollbar-thumb { background: var(--scrollbar); border-radius: 2px; }
+
+.saved-empty {
+  flex: 1; display: flex; flex-direction: column;
+  align-items: center; justify-content: center; gap: 6px;
+  color: var(--text-3); padding: 40px 20px;
+  text-align: center;
+}
+.saved-empty p { font-size: 13px; font-weight: 600; color: var(--text-2); margin: 0; }
+.saved-empty span { font-size: 11px; }
+
+/* Individual saved message card */
+.saved-item {
+  display: flex; align-items: flex-start; gap: 10px;
+  padding: 10px 12px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  transition: border-color 0.2s;
+  animation: chatPopIn 0.35s cubic-bezier(0.175,0.885,0.32,1.275) both;
+}
+.saved-item:hover { border-color: var(--border-hov); }
+.saved-item.leaving {
+  animation: transferSlideOut 0.25s var(--ease-in-out) forwards;
+}
+
+.saved-item-icon {
+  font-size: 16px; flex-shrink: 0; margin-top: 1px;
+  line-height: 1;
+}
+.saved-item-body { flex: 1; min-width: 0; }
+.saved-item-text {
+  font-size: 12px; color: var(--text);
+  white-space: pre-wrap; word-break: break-word;
+  line-height: 1.5; margin-bottom: 4px;
+}
+.saved-item-meta {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 10px; color: var(--text-3); font-weight: 600;
+}
+.saved-item-tag {
+  padding: 1px 5px;
+  background: rgba(40,224,40,0.08);
+  border: 1px solid rgba(40,224,40,0.15);
+  border-radius: 3px;
+  color: var(--text-2); font-size: 9px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: .3px;
+}
+
+.saved-item-del {
+  flex-shrink: 0; width: 20px; height: 20px;
+  background: none; border: none; padding: 0;
+  color: var(--text-3); cursor: pointer; border-radius: 3px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px; transition: color 0.15s;
+}
+.saved-item-del:hover { color: var(--error); }
+
+/* compose bar hidden on saved page */
+.compose-bar.page-hidden { display: none; }
 
 /* ═══════════════════════════════════════════════════════════════════════════
    SLIDE NOTIFICATION  (iOS-style icon + glass tray, spring timing)

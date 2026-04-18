@@ -540,6 +540,14 @@ function renderTransfer(t) {
       </button>` : ''}
     <div class="transfer-status-icon ${t.status}">${statusIcon}</div>
     ${t.status === 'active' ? `<button class="transfer-cancel" data-tid="${t.id}" title="Cancel">✕</button>` : ''}
+    ${t.status === 'done' ? (() => {
+      const sv = _savedMessages.some(m => m.sourceId === t.id);
+      return `<button class="btn-save ${sv ? 'is-saved' : ''}" data-tid="${t.id}" title="${sv ? 'Saved' : 'Save'}">
+        <svg viewBox="0 0 16 16" fill="${sv ? 'currentColor' : 'none'}" width="12" height="12">
+          <path d="M3 2a1 1 0 011-1h8a1 1 0 011 1v12l-5-2.5L3 14V2z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/>
+        </svg>
+      </button>`;
+    })() : ''}
   `;
 
   // Seek video thumbnails to show first frame (Chromium won't decode any frame without a seek)
@@ -596,6 +604,19 @@ $('transferList').addEventListener('click', e => {
     const tid = folderBtn.dataset.tid;
     const t   = state.transfers.get(tid);
     if (t?.savedPath) window.api.showInFolder(t.savedPath);
+    return;
+  }
+
+  const saveBtn = e.target.closest('.btn-save[data-tid]');
+  if (saveBtn) {
+    const tid = saveBtn.dataset.tid;
+    const t   = state.transfers.get(tid);
+    if (t && !_savedMessages.some(m => m.sourceId === tid)) {
+      saveMessage({ type: 'file', name: t.name, size: t.total, from: t.deviceName || '', dir: t.direction, sourceId: tid });
+      saveBtn.classList.add('is-saved');
+      saveBtn.title = 'Saved';
+      saveBtn.querySelector('path').setAttribute('fill', 'currentColor');
+    }
   }
 });
 
@@ -699,15 +720,30 @@ function buildClipItem(entry) {
   // Content
   const preview = entry.text.length > 140 ? entry.text.slice(0, 137) + '…' : entry.text;
   const body = el('div', 'clip-body');
+  const alreadySaved = _savedMessages.some(m => m.sourceId === entry.id);
   body.innerHTML = `
     <div class="clip-text">${escapeHtml(preview)}</div>
     <div class="clip-item-actions">
       <span class="clip-tag ${entry.dir}">${entry.dir === 'note' ? '✎ note' : entry.dir}</span>
       <button class="btn-icon" title="Copy" data-cid="${entry.id}">⎘</button>
+      <button class="btn-save ${alreadySaved ? 'is-saved' : ''}" title="${alreadySaved ? 'Saved' : 'Save message'}" data-cid="${entry.id}">
+        <svg viewBox="0 0 16 16" fill="${alreadySaved ? 'currentColor' : 'none'}" width="12" height="12">
+          <path d="M3 2a1 1 0 011-1h8a1 1 0 011 1v12l-5-2.5L3 14V2z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/>
+        </svg>
+      </button>
     </div>`;
   body.querySelector('.btn-icon').addEventListener('click', async () => {
     await window.api.setClipboard(entry.text);
     toast('Copied!', 'success', 1500);
+  });
+  body.querySelector('.btn-save').addEventListener('click', function() {
+    const saved = _savedMessages.some(m => m.sourceId === entry.id);
+    if (!saved) {
+      saveMessage({ type: 'clip', text: entry.text, from: entry.dir === 'recv' ? 'Remote' : 'You', dir: entry.dir, sourceId: entry.id });
+      this.classList.add('is-saved');
+      this.title = 'Saved';
+      this.querySelector('path').setAttribute('fill', 'currentColor');
+    }
   });
   item.appendChild(body);
 
@@ -852,6 +888,142 @@ function applyTheme(t) {
 
 $('themeToggle').addEventListener('click', () => {
   applyTheme(state.theme === 'dark' ? 'light' : 'dark');
+});
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   SAVED MESSAGES
+═══════════════════════════════════════════════════════════════════════════ */
+const _SAVED_KEY = 'lb-saved-messages';
+
+function _loadSaved() {
+  try { return JSON.parse(localStorage.getItem(_SAVED_KEY) || '[]'); } catch { return []; }
+}
+function _persistSaved(arr) {
+  localStorage.setItem(_SAVED_KEY, JSON.stringify(arr));
+}
+
+let _savedMessages = _loadSaved();
+
+function _updateSavedBadge() {
+  const badge = $('savedBadge');
+  if (!badge) return;
+  const n = _savedMessages.length;
+  badge.textContent = n;
+  badge.classList.toggle('hidden', n === 0);
+}
+
+function saveMessage(entry) {
+  // entry: { id, type:'clip'|'file', text?, name?, size?, from, dir? }
+  if (_savedMessages.some(m => m.sourceId === entry.sourceId)) return; // already saved
+  const msg = { ...entry, savedAt: Date.now(), id: Math.random().toString(36).slice(2) };
+  _savedMessages.unshift(msg);
+  _persistSaved(_savedMessages);
+  _updateSavedBadge();
+  renderSavedPage();
+  toast('Saved!', 'success', 1500);
+}
+
+function deleteSavedMessage(id) {
+  const item = $('savedList')?.querySelector(`[data-sid="${id}"]`);
+  if (item) {
+    item.classList.add('leaving');
+    setTimeout(() => {
+      _savedMessages = _savedMessages.filter(m => m.id !== id);
+      _persistSaved(_savedMessages);
+      _updateSavedBadge();
+      renderSavedPage();
+    }, 260);
+  }
+}
+
+function renderSavedPage() {
+  const list  = $('savedList');
+  const empty = $('savedEmpty');
+  const count = $('savedPageCount');
+  if (!list) return;
+
+  count.textContent = `${_savedMessages.length} saved`;
+
+  if (_savedMessages.length === 0) {
+    list.innerHTML = '';
+    list.appendChild(empty);
+    empty.style.display = '';
+    return;
+  }
+
+  empty.style.display = 'none';
+
+  // Re-render all (list is small, simple full rebuild)
+  const existing = new Set([...list.querySelectorAll('.saved-item')].map(e => e.dataset.sid));
+  for (const msg of _savedMessages) {
+    if (existing.has(msg.id)) continue;
+    list.prepend(buildSavedItem(msg));
+  }
+}
+
+function buildSavedItem(msg) {
+  const item = document.createElement('div');
+  item.className = 'saved-item';
+  item.dataset.sid = msg.id;
+
+  const icon   = msg.type === 'clip' ? '📋' : fileEmoji(msg.name || '');
+  const label  = msg.type === 'clip' ? (msg.dir === 'recv' ? 'received' : msg.dir || 'note') : 'file';
+  const body   = msg.type === 'clip'
+    ? escapeHtml(msg.text.length > 300 ? msg.text.slice(0, 297) + '…' : msg.text)
+    : `<span style="font-weight:600">${escapeHtml(msg.name || '')}</span>${msg.size ? ` — ${fmtBytes(msg.size)}` : ''}`;
+  const time   = new Date(msg.savedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+  item.innerHTML = `
+    <span class="saved-item-icon">${icon}</span>
+    <div class="saved-item-body">
+      <div class="saved-item-text">${body}</div>
+      <div class="saved-item-meta">
+        <span class="saved-item-tag">${label}</span>
+        <span>${msg.from || ''}</span>
+        <span>${time}</span>
+      </div>
+    </div>
+    <button class="saved-item-del" title="Remove">✕</button>`;
+
+  item.querySelector('.saved-item-del').addEventListener('click', () => deleteSavedMessage(msg.id));
+  return item;
+}
+
+/* Page switching */
+let _currentPage = 'chat';
+
+function switchPage(page) {
+  _currentPage = page;
+  const chatContent = $('cardDropzone');
+  const savedPage   = $('savedPage');
+  const compose     = document.querySelector('.compose-bar');
+  const navChat     = $('navChat');
+  const navSaved    = $('navSaved');
+
+  if (page === 'saved') {
+    chatContent.classList.add('page-hidden');
+    savedPage.classList.add('page-visible');
+    compose?.classList.add('page-hidden');
+    navChat.classList.remove('active');
+    navSaved.classList.add('active');
+    renderSavedPage();
+  } else {
+    chatContent.classList.remove('page-hidden');
+    savedPage.classList.remove('page-visible');
+    compose?.classList.remove('page-hidden');
+    navChat.classList.add('active');
+    navSaved.classList.remove('active');
+  }
+}
+
+$('navChat').addEventListener('click',  () => switchPage('chat'));
+$('navSaved').addEventListener('click', () => switchPage('saved'));
+$('clearAllSavedBtn').addEventListener('click', () => {
+  if (_savedMessages.length === 0) return;
+  _savedMessages = [];
+  _persistSaved(_savedMessages);
+  _updateSavedBadge();
+  renderSavedPage();
 });
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -1086,6 +1258,7 @@ async function init() {
   renderDevices();
   updateStatus();
 
+  _updateSavedBadge();
   toast('System Online', 'success', 3000);
   console.log('[LocalBeam] Ready:', state.myDevice);
 

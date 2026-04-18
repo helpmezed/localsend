@@ -94,6 +94,23 @@
       Scan Network
     </button>
 
+    <!-- Page navigation -->
+    <div class="sidebar-nav">
+      <button class="snav-btn active" id="navChat">
+        <svg viewBox="0 0 16 16" fill="none" width="12" height="12">
+          <path d="M2 3a1 1 0 011-1h10a1 1 0 011 1v7a1 1 0 01-1 1H9l-3 2v-2H3a1 1 0 01-1-1V3z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/>
+        </svg>
+        Chat
+      </button>
+      <button class="snav-btn" id="navSaved">
+        <svg viewBox="0 0 16 16" fill="none" width="12" height="12">
+          <path d="M3 2a1 1 0 011-1h8a1 1 0 011 1v12l-5-2.5L3 14V2z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/>
+        </svg>
+        Saved
+        <span class="snav-badge hidden" id="savedBadge">0</span>
+      </button>
+    </div>
+
     <!-- Available devices -->
     <div class="sidebar-devices">
       <div class="section-label-row">
@@ -168,6 +185,24 @@
 
         <!-- Particle canvas -->
         <canvas class="drop-particles" id="dropParticles"></canvas>
+      </div>
+    </div>
+
+    <!-- Saved messages page -->
+    <div class="saved-page" id="savedPage">
+      <div class="saved-pg-header">
+        <span class="saved-pg-title">Saved Messages</span>
+        <span class="saved-pg-count" id="savedPageCount">0 saved</span>
+        <button class="btn-ghost small" id="clearAllSavedBtn">Clear all</button>
+      </div>
+      <div class="saved-list" id="savedList">
+        <div class="saved-empty" id="savedEmpty">
+          <svg viewBox="0 0 24 24" fill="none" width="28" height="28">
+            <path d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
+          </svg>
+          <p>Nothing saved yet</p>
+          <span>Tap the bookmark on any message</span>
+        </div>
       </div>
     </div>
 
