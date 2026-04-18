@@ -977,19 +977,8 @@ window.onTransferDone = async (id, fileData, mimeType) => {
     const smallEnough = (t.total || 0) < 50 * 1024 * 1024;
 
     if ((isImage || isAudio || (isVideo && smallEnough)) && mime) {
-      try {
-        // Convert base64 → Uint8Array in chunks to avoid call-stack overflow
-        const CHUNK = 8192;
-        const raw   = atob(fileData);
-        const bytes = new Uint8Array(raw.length);
-        for (let i = 0; i < raw.length; i += CHUNK) {
-          const end = Math.min(i + CHUNK, raw.length);
-          for (let j = i; j < end; j++) bytes[j] = raw.charCodeAt(j);
-        }
-        t.previewUrl = URL.createObjectURL(new Blob([bytes], { type: mime }));
-      } catch (e) {
-        console.warn('[preview]', e.message);
-      }
+      // fileData is already base64 — use it directly as a data URL (no blob needed)
+      t.previewUrl = `data:${mime};base64,${fileData}`;
     }
 
     const result = await window.api.saveFile({ name: t.name, data: fileData });
