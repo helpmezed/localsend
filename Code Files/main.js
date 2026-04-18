@@ -13,7 +13,7 @@ const crypto = require('crypto');
 const dgram = require('dgram');
 const http  = require('http');
 const fs    = require('fs');
-const { autoUpdater } = require('electron-updater');
+let autoUpdater = null;
 
 // ── Constants ────────────────────────────────────────────────────────────────
 const DISCOVERY_PORT   = 53317;
@@ -280,31 +280,22 @@ function createWindow() {
   if (process.argv.includes('--dev')) mainWindow.webContents.openDevTools({ mode: 'detach' });
 }
 
-// ── Auto-updater events ───────────────────────────────────────────────────────
-autoUpdater.on('update-available', info => {
-  if (mainWindow && !mainWindow.isDestroyed()) {
-    mainWindow.webContents.send('update-status', {
-      status: 'available',
-      version: info.version
-    });
-  }
-});
-
-autoUpdater.on('update-downloaded', info => {
-  if (mainWindow && !mainWindow.isDestroyed()) {
-    mainWindow.webContents.send('update-status', {
-      status: 'ready',
-      version: info.version
-    });
-  }
-});
-
-autoUpdater.on('error', err => {
-  console.error('[updater]', err.message);
-});
-
 // ── App lifecycle ─────────────────────────────────────────────────────────────
 app.whenReady().then(() => {
+  // Lazy-load electron-updater now that app is ready
+  autoUpdater = require('electron-updater').autoUpdater;
+
+  autoUpdater.on('update-available', info => {
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      mainWindow.webContents.send('update-status', { status: 'available', version: info.version });
+    }
+  });
+  autoUpdater.on('update-downloaded', info => {
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      mainWindow.webContents.send('update-status', { status: 'ready', version: info.version });
+    }
+  });
+  autoUpdater.on('error', err => console.error('[updater]', err.message));
   const dev  = getOrCreateDevice();
   deviceId   = dev.id;
   deviceName = dev.name;
