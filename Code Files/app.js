@@ -1020,6 +1020,7 @@ window.onClipReceived = (text, deviceName) => {
   addClipHistory(text, 'recv');
   window.api.setClipboard(text);
   showSlideNotif('clip', 'Clipboard', `From ${deviceName}`);
+};
 
 window.onSendProgress = (id, done, total) => {
   const t = state.transfers.get(id);
