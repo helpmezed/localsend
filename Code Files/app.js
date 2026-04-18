@@ -855,6 +855,57 @@ $('themeToggle').addEventListener('click', () => {
 });
 
 /* ═══════════════════════════════════════════════════════════════════════════
+   SLIDE NOTIFICATION
+═══════════════════════════════════════════════════════════════════════════ */
+const _SN_ICONS = {
+  file: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+    <path fill-rule="evenodd" d="M12 2.25a.75.75 0 01.75.75v11.69l3.22-3.22a.75.75 0 111.06 1.06l-4.5 4.5a.75.75 0 01-1.06 0l-4.5-4.5a.75.75 0 111.06-1.06l3.22 3.22V3a.75.75 0 01.75-.75zm-9 13.5a.75.75 0 01.75.75v2.25a1.5 1.5 0 001.5 1.5h13.5a1.5 1.5 0 001.5-1.5V16.5a.75.75 0 011.5 0v2.25a3 3 0 01-3 3H5.25a3 3 0 01-3-3V16.5a.75.75 0 01.75-.75z" clip-rule="evenodd"/>
+  </svg>`,
+  clip: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+    <path fill-rule="evenodd" d="M10.5 3A1.501 1.501 0 009 4.5h6A1.5 1.5 0 0013.5 3h-3zm-2.693.178A3 3 0 0110.5 1.5h3a3 3 0 012.694 1.678c.497.042.992.092 1.486.15 1.497.173 2.57 1.46 2.57 2.929V19.5a3 3 0 01-3 3H6.75a3 3 0 01-3-3V6.257c0-1.47 1.073-2.756 2.57-2.93.493-.057.989-.107 1.487-.15z" clip-rule="evenodd"/>
+  </svg>`,
+};
+
+let _snTimer = null;
+
+function showSlideNotif(type, title, msg) {
+  const notif = $('slideNotif');
+  if (!notif) return;
+
+  clearTimeout(_snTimer);
+
+  // Update content
+  $('slideNotifIcon').innerHTML  = _SN_ICONS[type] || _SN_ICONS.file;
+  $('slideNotifTitle').textContent = title;
+  $('slideNotifMsg').textContent   = msg;
+
+  // Reset to base state so re-entrance animation fires cleanly
+  notif.classList.remove('sn-open', 'sn-visible');
+
+  // Double rAF: let browser flush the reset before starting transitions
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    notif.classList.add('sn-visible');
+    // Small pause so the slide-up completes before tray expands
+    setTimeout(() => notif.classList.add('sn-open'), 120);
+  }));
+
+  // Auto-dismiss after 4.5 s
+  _snTimer = setTimeout(_dismissSlideNotif, 4500);
+}
+
+function _dismissSlideNotif() {
+  const notif = $('slideNotif');
+  if (!notif) return;
+  notif.classList.remove('sn-open');
+  setTimeout(() => notif.classList.remove('sn-visible'), 750);
+}
+
+$('slideNotifBtn')?.addEventListener('click', () => {
+  clearTimeout(_snTimer);
+  _dismissSlideNotif();
+});
+
+/* ═══════════════════════════════════════════════════════════════════════════
    WINDOW CONTROLS
 ═══════════════════════════════════════════════════════════════════════════ */
 $('btnMin').addEventListener('click',   () => window.api.minimize());
@@ -950,7 +1001,7 @@ window.onTransferDone = async (id, fileData, mimeType) => {
 
   renderTransfer(t);
   spawnParticles($('dropParticles'));
-  toast(`Received: ${t.name}`, 'success');
+  showSlideNotif('file', 'File Received', t.name);
 };
 
 window.onClipError = (msg) => {
@@ -968,8 +1019,7 @@ window.onTransferError = (id, msg) => {
 window.onClipReceived = (text, deviceName) => {
   addClipHistory(text, 'recv');
   window.api.setClipboard(text);
-  toast(`Clipboard from ${deviceName}`, 'info');
-};
+  showSlideNotif('clip', 'Clipboard', `From ${deviceName}`);
 
 window.onSendProgress = (id, done, total) => {
   const t = state.transfers.get(id);
