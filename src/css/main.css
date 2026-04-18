@@ -680,9 +680,10 @@ body::before {
 }
 
 .file-preview-wrap.visual {
-  width: 52px; height: 52px;
+  width: 88px; height: 66px;
   border-radius: 7px; overflow: hidden;
   background: var(--bg-card); border: 1px solid var(--border);
+  flex-shrink: 0;
 }
 
 .preview-thumb {
@@ -701,12 +702,27 @@ body::before {
   gap: 3px; flex-shrink: 0;
 }
 
-/* Only animate preview on new items — triggered via JS class */
+/* Glow burst on any new transfer item */
+.transfer-item.new-item {
+  animation: chatPopIn 0.45s cubic-bezier(0.175,0.885,0.32,1.275) forwards,
+             fileArrivalGlow 0.75s ease-out 0.15s;
+}
+.transfer-item.active.new-item {
+  animation: chatPopIn 0.45s cubic-bezier(0.175,0.885,0.32,1.275) forwards,
+             fileArrivalGlow 0.75s ease-out 0.15s,
+             intenseGlow 3s infinite ease-in-out 1s;
+}
+
+/* Icon card entrance on new items */
 .transfer-item.new-item .file-icon-card,
-.transfer-item.new-item .file-preview-wrap,
-.clip-item.new-item .file-icon-card,
-.clip-item.new-item .file-preview-wrap {
+.clip-item.new-item .file-icon-card {
   animation: previewReveal 0.55s cubic-bezier(0.175,0.885,0.32,1.275) 0.15s both;
+}
+
+/* Visual media (image/video) gets the dramatic photo-reveal animation */
+.transfer-item.new-item .file-preview-wrap.visual,
+.clip-item.new-item .file-preview-wrap.visual {
+  animation: photoReveal 0.7s cubic-bezier(0.175,0.885,0.32,1.275) 0.1s both;
 }
 
 .file-icon-emoji { font-size: 17px; line-height: 1; }

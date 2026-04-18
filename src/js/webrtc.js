@@ -138,13 +138,25 @@ class RTCManager {
     const totalChunks = Math.ceil(fileData.byteLength / CHUNK_SIZE);
     const tid         = genId();
 
+    // ── Build preview URL from already-read bytes (free since data is in memory) ──
+    let previewUrl;
+    try {
+      const previewable = mimeType.startsWith('image/') || mimeType.startsWith('audio/') ||
+                          (mimeType.startsWith('video/') && fileData.byteLength < 50 * 1024 * 1024);
+      if (previewable) previewUrl = URL.createObjectURL(new Blob([fileData], { type: mimeType }));
+    } catch {}
+
     window.onTransferStart?.({
       id: tid, sessionId: sid,
       name: fileName, total: fileSize, done: 0,
       direction: 'send', status: 'active',
-      mimeType,
+      mimeType, previewUrl,
       deviceName: device.alias || device.name
     });
+
+    // ── Register channel handlers BEFORE signaling to avoid race on fast LAN ──
+    chan.onopen  = () => this._sendFileData(chan, tid, fileData, fileName, fileSize, mimeType, totalChunks);
+    chan.onerror = () => { window.onTransferError?.(tid, 'Channel error'); this._cleanup(sid); };
 
     // ── Create & send offer ─────────────────────────────────────────────
     try {
@@ -166,9 +178,6 @@ class RTCManager {
       this._cleanup(sid);
       return;
     }
-
-    chan.onopen  = () => this._sendFileData(chan, tid, fileData, fileName, fileSize, mimeType, totalChunks);
-    chan.onerror = () => { window.onTransferError?.(tid, 'Channel error'); this._cleanup(sid); };
   }
 
   /* ── Pump file data over DataChannel with flow control ─────────────────── */
@@ -213,27 +222,7 @@ class RTCManager {
 
     this.sessions.set(sid, { peer, channel: chan, role: 'initiator', device });
 
-    try {
-      const offer = await peer.createOffer();
-      await peer.setLocalDescription(offer);
-      await this._waitICE(peer);
-
-      const resp = await window.api.sendSignal(device.ip, device.port, '/signal', {
-        type: 'offer',
-        sdp:  peer.localDescription.sdp,
-        meta: { isClip: true, sender: window._myDevice?.name }
-      });
-
-      if (!resp || resp.error) throw new Error(resp?.error || 'No answer');
-      await peer.setRemoteDescription({ type: 'answer', sdp: resp.sdp });
-
-    } catch (err) {
-      window.onClipError?.(`Failed to reach ${device.alias || device.name}: ${err.message}`);
-      this._cleanup(sid);
-      return;
-    }
-
-    // Timeout — if the channel doesn't open within 12s, surface an error
+    // ── Register channel handlers BEFORE signaling to avoid race on fast LAN ──
     const openTimeout = setTimeout(() => {
       window.onClipError?.(`Could not connect to ${device.alias || device.name} — check firewall`);
       this._cleanup(sid);
@@ -250,6 +239,27 @@ class RTCManager {
       window.onClipError?.(`Connection error with ${device.alias || device.name}`);
       this._cleanup(sid);
     };
+
+    try {
+      const offer = await peer.createOffer();
+      await peer.setLocalDescription(offer);
+      await this._waitICE(peer);
+
+      const resp = await window.api.sendSignal(device.ip, device.port, '/signal', {
+        type: 'offer',
+        sdp:  peer.localDescription.sdp,
+        meta: { isClip: true, sender: window._myDevice?.name }
+      });
+
+      if (!resp || resp.error) throw new Error(resp?.error || 'No answer');
+      await peer.setRemoteDescription({ type: 'answer', sdp: resp.sdp });
+
+    } catch (err) {
+      clearTimeout(openTimeout);
+      window.onClipError?.(`Failed to reach ${device.alias || device.name}: ${err.message}`);
+      this._cleanup(sid);
+      return;
+    }
   }
 
   /* ═══════════════════════════════════════════════════════════════════════

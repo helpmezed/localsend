@@ -892,8 +892,7 @@ window.api.onSignalIn(async ({ reqId, url, data }) => {
    INCOMING FILE / CLIPBOARD CALLBACKS (from webrtc.js)
 ═══════════════════════════════════════════════════════════════════════════ */
 window.onTransferStart = (t) => {
-  // Attach staged preview for files being sent (images/video/audio dropped from browser)
-  if (t.direction === 'send' && _stagedPreviews.has(t.name)) {
+  if (t.direction === 'send' && !t.previewUrl && _stagedPreviews.has(t.name)) {
     t.previewUrl = _stagedPreviews.get(t.name);
     _stagedPreviews.delete(t.name);
   }
